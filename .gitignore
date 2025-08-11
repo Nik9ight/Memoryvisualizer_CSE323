@@ -1,0 +1,90 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log Files
+*.log
+
+# OS specific files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# Kotlin-specific
+*.kotlin_module
+
+# Version control
+vcs.xml
+
+# Eclipse specific files
+.classpath
+.project
+.settings/
+
+# IntelliJ/Android Studio specific files not covered above
+*.iws
+.idea/dictionaries
+.idea/codeStyles/
+out/
+
+# Visual Studio Code specific files
+.vscode/
+.history/
