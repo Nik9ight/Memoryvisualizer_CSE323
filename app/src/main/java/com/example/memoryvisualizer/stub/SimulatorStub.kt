@@ -1,8 +1,5 @@
 package com.example.memoryvisualizer.stub
 
-import kotlinx.coroutines.delay
-import kotlin.math.abs
-
 /**
  * Temporary deterministic simulator facade for UI scaffolding.
  * Person A will replace with real model integration later.
@@ -167,9 +164,8 @@ class SimulatorStub {
         val largestFree = free.maxOfOrNull { it.size } ?: 0
         val externalFree = (totalFree - largestFree).coerceAtLeast(0)
         val holeCount = free.size
-        val success = processes.count { it.status == ProcessStub.Status.ALLOCATED }
-        val waitingOrFailed = processes.count { it.status != ProcessStub.Status.ALLOCATED }.coerceAtLeast(1)
-        val pct = if (processes.isEmpty()) 0.0 else success * 100.0 / processes.count { it.status == ProcessStub.Status.ALLOCATED || it.status == ProcessStub.Status.WAITING || it.status == ProcessStub.Status.FAILED }
+    val success = processes.count { it.status == ProcessStub.Status.ALLOCATED }
+    val pct = if (processes.isEmpty()) 0.0 else success * 100.0 / processes.size
         val stats = StatsStub(
             internalTotal = 0,
             externalFree = externalFree,
@@ -178,8 +174,8 @@ class SimulatorStub {
             successPct = pct
         )
         val result = AllocationResultStub(blocks.map { it.copy() }, processes.map { it.copy() }, stats, action)
-        // Truncate forward history if stepping after undo
-        while (snapshots.lastIndex > cursor) snapshots.removeLast()
+    // Truncate forward history if stepping after undo
+    while (snapshots.lastIndex > cursor) snapshots.removeAt(snapshots.lastIndex)
         snapshots += result
         cursor = snapshots.lastIndex
         return result
