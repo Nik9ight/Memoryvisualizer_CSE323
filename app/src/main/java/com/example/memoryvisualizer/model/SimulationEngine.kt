@@ -18,6 +18,10 @@ internal class SimulationEngine {
     private var originalBlocks = listOf<Int>()
     private var originalProcesses = listOf<Int>()
     
+    // History management for undo/redo functionality
+    private val snapshots = mutableListOf<AllocationResult>()
+    private var cursor = -1                              // points to current snapshot
+    
     /**
      * Loads the initial memory configuration and process list.
      */
@@ -31,6 +35,8 @@ internal class SimulationEngine {
         this.processes.clear()
         nextProcessIdx = 0
         internalFragTotal = 0
+        snapshots.clear()
+        cursor = -1
         
         // Create initial free blocks
         var addr = 0
@@ -45,6 +51,9 @@ internal class SimulationEngine {
         }
         
         lastAction = "LOAD"
+        
+        // Save initial snapshot
+        saveSnapshot()
     }
     
     /**
@@ -64,6 +73,7 @@ internal class SimulationEngine {
             // Mark as FAILED if no suitable block found
             processes[pIdx] = p.copy(status = ProcessStatus.FAILED)
             lastAction = "FAIL ${p.id} via ${strategy.name}"
+            saveSnapshot()
             snapshot(lastAction)
         } else {
             // Split the chosen block and allocate the process
@@ -71,6 +81,7 @@ internal class SimulationEngine {
             lastAction = "ALLOCATE ${p.id} via ${strategy.name}"
             // Advance pointer for next call
             nextProcessIdx = pIdx + 1
+            saveSnapshot()
             snapshot(lastAction)
         }
     }
@@ -125,6 +136,7 @@ internal class SimulationEngine {
         coalesceFree() // Ensure free blocks are merged
         
         lastAction = if (changed) "COMPACT+REALLOC" else "COMPACT"
+        saveSnapshot()
         return snapshot(lastAction)
     }
     
@@ -133,13 +145,13 @@ internal class SimulationEngine {
      */
     fun reset(): AllocationResult {
         load(originalBlocks, originalProcesses)
-        return snapshot("RESET")
+        return current() // load() already saves snapshot, so just return current
     }
     
     /**
      * Returns the current state of the simulation without changes.
      */
-    fun current(): AllocationResult = snapshot("CURRENT")
+    fun current(): AllocationResult = snapshots.getOrElse(cursor) { snapshot("CURRENT") }
     
     /**
      * Splits a free block and allocates a portion to a process.
@@ -264,5 +276,78 @@ internal class SimulationEngine {
         }
         
         return -1 // No waiting processes found
+    }
+    
+    /**
+     * Moves back to the previous snapshot in history.
+     */
+    fun undo(): AllocationResult? {
+        if (cursor > 0) {
+            cursor--
+            restoreFromSnapshot()
+            return current()
+        }
+        return null
+    }
+    
+    /**
+     * Moves forward to the next snapshot in history.
+     */
+    fun redo(): AllocationResult? {
+        if (cursor < snapshots.lastIndex) {
+            cursor++
+            restoreFromSnapshot()
+            return current()
+        }
+        return null
+    }
+    
+    /**
+     * Checks if undo operation is possible.
+     */
+    fun canUndo(): Boolean = cursor > 0
+    
+    /**
+     * Checks if redo operation is possible.
+     */
+    fun canRedo(): Boolean = cursor < snapshots.lastIndex
+    
+    /**
+     * Saves the current state as a snapshot and truncates forward history.
+     */
+    private fun saveSnapshot() {
+        // Truncate forward history if stepping after undo
+        while (snapshots.lastIndex > cursor) {
+            snapshots.removeAt(snapshots.lastIndex)
+        }
+        
+        val snapshot = snapshot(lastAction)
+        snapshots.add(snapshot)
+        cursor = snapshots.lastIndex
+    }
+    
+    /**
+     * Restores the engine state from the current snapshot.
+     */
+    private fun restoreFromSnapshot() {
+        val currentSnapshot = snapshots.getOrNull(cursor) ?: return
+        
+        // Restore blocks
+        blocks.clear()
+        blocks.addAll(currentSnapshot.blocks.map { it.copy() })
+        
+        // Restore processes
+        processes.clear()
+        processes.addAll(currentSnapshot.processes.map { it.copy() })
+        
+        // Restore other state
+        lastAction = currentSnapshot.lastAction
+        internalFragTotal = currentSnapshot.stats.internalTotal
+        
+        // Recalculate nextProcessIdx
+        nextProcessIdx = processes.indexOfFirst { it.status == ProcessStatus.WAITING }
+        if (nextProcessIdx == -1) {
+            nextProcessIdx = processes.size
+        }
     }
 }

@@ -1,10 +1,23 @@
 package com.example.memoryvisualizer.stub
 
+import com.example.memoryvisualizer.model.SimulatorImpl
+import com.example.memoryvisualizer.model.strategy.FirstFitStrategy
+import com.example.memoryvisualizer.model.strategy.BestFitStrategy
+import com.example.memoryvisualizer.model.strategy.WorstFitStrategy
+import com.example.memoryvisualizer.model.strategy.AllocationStrategy
+import com.example.memoryvisualizer.model.AllocationResult
+import com.example.memoryvisualizer.model.MemoryBlock
+import com.example.memoryvisualizer.model.ProcessDef
+import com.example.memoryvisualizer.model.ProcessStatus
+import com.example.memoryvisualizer.model.FragmentationStats
+
 /**
- * Temporary deterministic simulator facade for UI scaffolding.
- * Person A will replace with real model integration later.
+ * Adapter that bridges the real SimulatorImpl with the UI-expected interface.
+ * Now uses Person A's actual model classes as the foundation while maintaining UI compatibility.
  */
 class SimulatorStub {
+    
+    // UI-compatible data classes that extend/wrap Person A's model classes
     data class BlockStub(
         val id: String,
         val start: Int,
@@ -12,7 +25,21 @@ class SimulatorStub {
         val isFree: Boolean,
         val processId: String? = null,
         val internalFrag: Int = 0
-    )
+    ) {
+        companion object {
+            fun from(memoryBlock: MemoryBlock): BlockStub {
+                return BlockStub(
+                    id = memoryBlock.id,
+                    start = memoryBlock.start,
+                    size = memoryBlock.size,
+                    isFree = memoryBlock.isFree,
+                    processId = memoryBlock.getProcessId(),
+                    internalFrag = 0 // Our implementation doesn't track internal fragmentation per block
+                )
+            }
+        }
+    }
+    
     data class ProcessStub(
         val id: String,
         val size: Int,
@@ -20,164 +47,148 @@ class SimulatorStub {
         val allocatedBlockId: String? = null
     ) {
         enum class Status { ALLOCATED, WAITING, FAILED }
+        
+        companion object {
+            fun from(processDef: ProcessDef): ProcessStub {
+                return ProcessStub(
+                    id = processDef.id,
+                    size = processDef.size,
+                    status = when(processDef.status) {
+                        ProcessStatus.ALLOCATED -> Status.ALLOCATED
+                        ProcessStatus.WAITING -> Status.WAITING
+                        ProcessStatus.FAILED -> Status.FAILED
+                    },
+                    allocatedBlockId = processDef.allocatedBlockId
+                )
+            }
+        }
     }
+    
     data class StatsStub(
         val internalTotal: Int,
         val externalFree: Int,
         val largestFree: Int,
         val holeCount: Int,
         val successPct: Double
-    )
+    ) {
+        companion object {
+            fun from(fragmentationStats: FragmentationStats, processes: List<ProcessDef>): StatsStub {
+                val successPct = if (processes.isEmpty()) 0.0 else {
+                    val allocated = processes.count { it.status == ProcessStatus.ALLOCATED }
+                    allocated * 100.0 / processes.size
+                }
+                
+                return StatsStub(
+                    internalTotal = fragmentationStats.internalTotal,
+                    externalFree = fragmentationStats.externalTotal,
+                    largestFree = fragmentationStats.largestFree,
+                    holeCount = fragmentationStats.holeCount,
+                    successPct = successPct
+                )
+            }
+        }
+    }
+    
     data class AllocationResultStub(
         val blocks: List<BlockStub>,
         val processes: List<ProcessStub>,
         val stats: StatsStub,
         val action: String
-    )
-
-    // Action log placeholder for future sealed class integration
-    // sealed interface ActionLogEntry
-
-    private var memorySize = 0
-    private var initialBlocks: List<Int> = emptyList()
-    private var processSizes: List<Int> = emptyList()
-    private var strategy: Strategy = Strategy.FIRST
-
-    private val snapshots = mutableListOf<AllocationResultStub>()
-    private var cursor = -1 // points to current snapshot
-
+    ) {
+        companion object {
+            fun from(allocationResult: AllocationResult): AllocationResultStub {
+                return AllocationResultStub(
+                    blocks = allocationResult.blocks.map { BlockStub.from(it) },
+                    processes = allocationResult.processes.map { ProcessStub.from(it) },
+                    stats = StatsStub.from(allocationResult.stats, allocationResult.processes),
+                    action = allocationResult.lastAction
+                )
+            }
+        }
+    }
+    
     enum class Strategy { FIRST, BEST, WORST }
 
+    // Real simulator instance
+    private val realSimulator = SimulatorImpl(FirstFitStrategy())
+    private var currentStrategy: Strategy = Strategy.FIRST
+
     fun load(blocks: List<Int>, processes: List<Int>) : AllocationResultStub {
-        initialBlocks = blocks.filter { it > 0 }
-        processSizes = processes.filter { it > 0 }
-        memorySize = initialBlocks.sum()
-        snapshots.clear()
-        cursor = -1
-        val start = snapshot(createInitialBlocks(), createInitialProcesses(), action = "LOAD")
-        return start
+        realSimulator.load(blocks, processes)
+        return AllocationResultStub.from(realSimulator.current())
     }
 
-    fun setStrategy(s: Strategy) { strategy = s }
+    fun setStrategy(s: Strategy) {
+        currentStrategy = s
+        val strategy = when(s) {
+            Strategy.FIRST -> FirstFitStrategy()
+            Strategy.BEST -> BestFitStrategy()
+            Strategy.WORST -> WorstFitStrategy()
+        }
+        realSimulator.setStrategy(strategy)
+    }
 
-    fun current(): AllocationResultStub? = snapshots.getOrNull(cursor)
+    fun current(): AllocationResultStub? {
+        return AllocationResultStub.from(realSimulator.current())
+    }
 
     fun step(): AllocationResultStub? {
-        val cur = current() ?: return null
-        val waiting = cur.processes.firstOrNull { it.status == ProcessStub.Status.WAITING } ?: return cur
-        val blocks = cur.blocks.toMutableList()
-        val idx = chooseBlock(blocks, waiting.size)
-        val newProcs = cur.processes.map { p ->
-            if (p.id == waiting.id) {
-                if (idx == -1) p.copy(status = ProcessStub.Status.FAILED) else p.copy(status = ProcessStub.Status.ALLOCATED)
-            } else p
-        }.toMutableList()
-        val action: String
-        if (idx == -1) {
-            action = "FAIL ${waiting.id}" // deterministic fail
-        } else {
-            val free = blocks[idx]
-            val alloc = free.copy(id = free.id + ":${waiting.id}", size = waiting.size, isFree = false, processId = waiting.id)
-            blocks[idx] = alloc
-            val leftover = free.size - waiting.size
-            if (leftover > 0) {
-                blocks.add(idx + 1, free.copy(id = free.id + ":L", start = free.start + waiting.size, size = leftover))
-            }
-            action = "ALLOCATE ${waiting.id} via ${strategy.name}"
-        }
-        val normalized = normalize(blocks)
-        val result = snapshot(normalized, newProcs, action)
-        return result
+        return AllocationResultStub.from(realSimulator.step())
     }
 
     fun runAll(): AllocationResultStub? {
-        while (true) {
-            val before = current() ?: return null
-            val waiting = before.processes.any { it.status == ProcessStub.Status.WAITING }
-            if (!waiting) return before
-            step() ?: return before
+        val results = realSimulator.runAll()
+        return if (results.isNotEmpty()) {
+            AllocationResultStub.from(results.last())
+        } else {
+            AllocationResultStub.from(realSimulator.current())
         }
     }
 
     fun compact(): AllocationResultStub? {
-        val cur = current() ?: return null
-        val allocated = cur.blocks.filter { !it.isFree }.sortedBy { it.start }
-        var ptr = 0
-        val newBlocks = mutableListOf<BlockStub>()
-        allocated.forEach { b ->
-            newBlocks.add(b.copy(start = ptr))
-            ptr += b.size
-        }
-        val free = memorySize - ptr
-        if (free > 0) newBlocks.add(BlockStub(id = "F", start = ptr, size = free, isFree = true))
-        val action = "COMPACT"
-        return snapshot(normalize(newBlocks), cur.processes, action)
+        return AllocationResultStub.from(realSimulator.compact())
     }
 
-    fun reset(): AllocationResultStub? = load(initialBlocks, processSizes)
+    fun reset(): AllocationResultStub? {
+        return AllocationResultStub.from(realSimulator.reset())
+    }
 
     fun undo(): AllocationResultStub? {
-        if (cursor > 0) cursor--
-        return current()
+        return realSimulator.undo()?.let { AllocationResultStub.from(it) }
     }
 
     fun redo(): AllocationResultStub? {
-        if (cursor < snapshots.lastIndex) cursor++
-        return current()
+        return realSimulator.redo()?.let { AllocationResultStub.from(it) }
+    }
+    
+    fun canUndo(): Boolean {
+        return realSimulator.canUndo()
+    }
+    
+    fun canRedo(): Boolean {
+        return realSimulator.canRedo()
     }
 
-    private fun chooseBlock(blocks: List<BlockStub>, size: Int): Int {
-        val freeBlocks = blocks.withIndex().filter { it.value.isFree && it.value.size >= size }
-        return when(strategy) {
-            Strategy.FIRST -> freeBlocks.minByOrNull { it.index }?.index ?: -1
-            Strategy.BEST -> freeBlocks.minByOrNull { it.value.size * 10 + it.value.start }?.index ?: -1
-            Strategy.WORST -> freeBlocks.maxByOrNull { it.value.size * 10 - it.value.start }?.index ?: -1
-        }
+    /**
+     * Utility method to get the process ID from a memory block stub.
+     */
+    fun getProcessIdFromBlock(block: BlockStub): String? {
+        return block.processId
     }
-
-    private fun createInitialBlocks(): List<BlockStub> {
-        val list = mutableListOf<BlockStub>()
-        var addr = 0
-        initialBlocks.forEachIndexed { i, sz ->
-            list += BlockStub(id = "B$i", start = addr, size = sz, isFree = true)
-            addr += sz
-        }
-        return list
+    
+    /**
+     * Utility method to calculate success percentage from process list.
+     */
+    fun calculateSuccessPercentage(processes: List<ProcessStub>): Double {
+        if (processes.isEmpty()) return 0.0
+        val allocated = processes.count { it.status == ProcessStub.Status.ALLOCATED }
+        return allocated * 100.0 / processes.size
     }
-
-    private fun createInitialProcesses(): List<ProcessStub> = processSizes.mapIndexed { i, sz ->
-        ProcessStub(id = "P${i+1}", size = sz, status = ProcessStub.Status.WAITING)
-    }
-
-    private fun normalize(blocks: List<BlockStub>): List<BlockStub> = blocks.sortedBy { it.start }
-        .fold(mutableListOf()) { acc, b ->
-            val last = acc.lastOrNull()
-            if (last != null && last.isFree && b.isFree && last.start + last.size == b.start) {
-                acc[acc.lastIndex] = last.copy(size = last.size + b.size)
-            } else acc += b
-            acc
-        }
-
-    private fun snapshot(blocks: List<BlockStub>, processes: List<ProcessStub>, action: String): AllocationResultStub {
-        val free = blocks.filter { it.isFree }
-        val totalFree = free.sumOf { it.size }
-        val largestFree = free.maxOfOrNull { it.size } ?: 0
-        val externalFree = (totalFree - largestFree).coerceAtLeast(0)
-        val holeCount = free.size
-    val success = processes.count { it.status == ProcessStub.Status.ALLOCATED }
-    val pct = if (processes.isEmpty()) 0.0 else success * 100.0 / processes.size
-        val stats = StatsStub(
-            internalTotal = 0,
-            externalFree = externalFree,
-            largestFree = largestFree,
-            holeCount = holeCount,
-            successPct = pct
-        )
-        val result = AllocationResultStub(blocks.map { it.copy() }, processes.map { it.copy() }, stats, action)
-    // Truncate forward history if stepping after undo
-    while (snapshots.lastIndex > cursor) snapshots.removeAt(snapshots.lastIndex)
-        snapshots += result
-        cursor = snapshots.lastIndex
-        return result
+    
+    /**
+     * Utility method to get total memory size from blocks.
+     */
+    fun getTotalMemorySize(blocks: List<BlockStub>): Int {
+        return blocks.sumOf { it.size }
     }
 }

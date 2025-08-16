@@ -26,4 +26,12 @@ class SimulatorImpl(private var strategy: AllocationStrategy) : Simulator {
     override fun reset(): AllocationResult = engine.reset()
 
     override fun current(): AllocationResult = engine.current()
+    
+    override fun undo(): AllocationResult? = engine.undo()
+    
+    override fun redo(): AllocationResult? = engine.redo()
+    
+    override fun canUndo(): Boolean = engine.canUndo()
+    
+    override fun canRedo(): Boolean = engine.canRedo()
 }

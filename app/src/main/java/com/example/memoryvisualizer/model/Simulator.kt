@@ -10,4 +10,8 @@ interface Simulator {
     fun compact(): AllocationResult           // compaction + retry waiting
     fun reset(): AllocationResult
     fun current(): AllocationResult
+    fun undo(): AllocationResult?             // move back to previous snapshot
+    fun redo(): AllocationResult?             // move forward to next snapshot
+    fun canUndo(): Boolean                    // check if undo is possible
+    fun canRedo(): Boolean                    // check if redo is possible
 }
