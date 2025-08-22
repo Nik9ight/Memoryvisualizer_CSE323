@@ -1,87 +1,368 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:fillViewport="false"
+    android:background="@color/scandi_bg"
+    android:scrollbars="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/btn_step"
-            android:layout_width="0dp"
+        android:orientation="vertical"
+        android:padding="@dimen/card_padding">
+
+        <!-- Control Panel Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/control_panel_card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_step"
-            android:contentDescription="Step allocation" />
-        <Button
-            android:id="@+id/btn_run"
-            android:layout_width="0dp"
+            android:layout_marginBottom="@dimen/card_margin_vertical"
+            app:cardBackgroundColor="@color/scandi_surface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="@dimen/card_elevation"
+            app:strokeColor="@color/scandi_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/card_padding">
+
+                <!-- Header -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/TextTitleMedium"
+                    android:text="Controls"
+                    android:layout_marginBottom="@dimen/section_gap" />
+
+                <!-- Primary Controls -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/TextCaption"
+                    android:text="Primary actions"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/small_gap"
+                    android:textColor="@color/scandi_text_muted" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/section_gap"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_step"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_primary"
+                        android:layout_marginEnd="@dimen/spacing_sm"
+                        android:layout_weight="1"
+                        style="@style/ButtonPrimary"
+                        android:text="@string/action_step"
+                        app:icon="@drawable/ic_step"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_medium" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_run"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_primary"
+                        android:layout_marginEnd="@dimen/spacing_sm"
+                        android:layout_weight="1"
+                        style="@style/ButtonSecondary"
+                        android:text="@string/action_run"
+                        app:icon="@drawable/ic_play"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_medium" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_compact"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_primary"
+                        android:layout_weight="1"
+                        style="@style/ButtonOutlinedPrimary"
+                        android:text="@string/action_compact"
+                        app:icon="@drawable/ic_compact"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_medium" />
+
+                </LinearLayout>
+
+                <!-- Secondary Controls -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/TextCaption"
+                    android:text="Management"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="@dimen/small_gap"
+                    android:textColor="@color/scandi_text_muted" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_reset"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_secondary"
+                        android:layout_marginEnd="@dimen/spacing_sm"
+                        android:layout_weight="1"
+                        style="@style/ButtonOutlinedDanger"
+                        android:text="@string/action_reset"
+                        app:icon="@drawable/ic_reset"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_small" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_undo"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_secondary"
+                        android:layout_marginEnd="@dimen/spacing_sm"
+                        android:layout_weight="1"
+                        style="@style/ButtonOutlinedNeutral"
+                        android:text="@string/action_undo"
+                        app:icon="@drawable/ic_undo"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_small" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_redo"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/button_height_secondary"
+                        android:layout_weight="1"
+                        style="@style/ButtonOutlinedNeutral"
+                        android:text="@string/action_redo"
+                        app:icon="@drawable/ic_redo"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/spacing_md"
+                        app:iconSize="@dimen/icon_size_small" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Status Panel Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/status_panel_card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_run"
-            android:contentDescription="Run all allocations" />
-        <Button
-            android:id="@+id/btn_compact"
-            android:layout_width="0dp"
+            android:layout_marginBottom="@dimen/card_margin_vertical"
+            app:cardBackgroundColor="@color/scandi_surface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="@dimen/card_elevation"
+            app:strokeColor="@color/scandi_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/card_padding">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/TextTitleMedium"
+                    android:text="Status &amp; Information"
+                    android:layout_marginBottom="@dimen/section_gap" />
+
+                <!-- Status Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/small_gap"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/TextCaption"
+                        android:text="Status"
+                        android:textColor="@color/scandi_text_muted" />
+
+                    <View
+                        android:id="@+id/status_indicator"
+                        android:layout_width="@dimen/icon_size_status"
+                        android:layout_height="@dimen/icon_size_status"
+                        android:layout_marginStart="@dimen/spacing_sm"
+                        android:layout_marginEnd="@dimen/spacing_sm"
+                        android:background="@drawable/ic_circle"
+                        android:backgroundTint="@color/scandi_text_muted" />
+
+                    <TextView
+                        android:id="@+id/text_status"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        style="@style/TextBody"
+                        android:text="Ready to start"
+                        android:textStyle="bold"
+                        android:textColor="@color/scandi_text_high" />
+
+                </LinearLayout>
+
+                <!-- Last Action Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/small_gap"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/TextCaption"
+                        android:text="Last action"
+                        android:textColor="@color/scandi_text_muted" />
+
+                    <TextView
+                        android:id="@+id/text_action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        style="@style/TextBody"
+                        android:text="None"
+                        android:textColor="@color/scandi_text_high" />
+
+                </LinearLayout>
+
+                <!-- Stats Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/TextCaption"
+                        android:text="Statistics"
+                        android:textColor="@color/scandi_text_muted" />
+
+                    <TextView
+                        android:id="@+id/text_stats"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_md"
+                        android:layout_weight="1"
+                        style="@style/TextBody"
+                        android:text="No data available"
+                        android:textColor="@color/scandi_text_high" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Visualization Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/visualization_card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_compact"
-            android:contentDescription="Compact memory" />
+            android:layout_marginBottom="@dimen/spacing_lg"
+            app:cardBackgroundColor="@color/scandi_surface"
+            app:cardCornerRadius="@dimen/radius_md"
+            app:cardElevation="@dimen/card_elevation"
+            app:strokeColor="@color/scandi_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="@dimen/card_padding"
+                    android:paddingBottom="@dimen/small_gap">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        style="@style/TextTitleMedium"
+                        android:text="Memory Visualization"
+                        android:textColor="@color/scandi_text_high" />
+
+                </LinearLayout>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/spacing_md">
+
+                    <com.example.memoryvisualizer.ui.view.MemoryCanvasView
+                        android:id="@+id/memory_canvas"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/canvas_height"
+                        android:contentDescription="Interactive memory visualization canvas"
+                        android:background="@color/scandi_secondary" />
+
+                    <LinearLayout
+                        android:id="@+id/empty_state_overlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/canvas_height"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="@color/scandi_secondary"
+                        android:padding="@dimen/card_padding">
+
+                        <ImageView
+                            android:layout_width="96dp"
+                            android:layout_height="96dp"
+                            android:layout_marginBottom="@dimen/spacing_xl"
+                            android:alpha="0.4"
+                            android:src="@drawable/ic_compact"
+                            android:tint="@color/scandi_text_muted" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            style="@style/TextBody"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="@dimen/small_gap"
+                            android:text="Visualization area"
+                            android:textColor="@color/scandi_text_high" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            style="@style/TextCaption"
+                            android:text="Configure memory blocks and processes in the Setup tab to begin visualization"
+                            android:textAlignment="center"
+                            android:lineSpacingExtra="2dp"
+                            android:paddingHorizontal="@dimen/spacing_xxl"
+                            android:textColor="@color/scandi_text_muted" />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/btn_reset"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_reset"
-            android:contentDescription="Reset simulation" />
-        <Button
-            android:id="@+id/btn_undo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_undo"
-            android:contentDescription="Undo last step" />
-        <Button
-            android:id="@+id/btn_redo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_redo"
-            android:contentDescription="Redo step" />
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/label_last_action" />
-    <TextView
-        android:id="@+id/text_action"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/label_stats" />
-    <TextView
-        android:id="@+id/text_stats"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <com.example.memoryvisualizer.ui.view.MemoryCanvasView
-        android:id="@+id/memory_canvas"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:contentDescription="Memory visualization canvas" />
-
-</LinearLayout>
+</ScrollView>

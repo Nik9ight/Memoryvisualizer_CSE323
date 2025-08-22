@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/scandi_bg"
+    tools:context=".ui.activity.MainActivity">
+
+    <!-- App Bar optimized for landscape -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/app_bar_card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/section_gap"
+        app:cardBackgroundColor="@color/scandi_primary"
+        app:cardCornerRadius="@dimen/radius_md"
+        app:cardElevation="@dimen/card_elevation"
+        app:strokeColor="@color/scandi_primary_600"
+        app:strokeWidth="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="@dimen/card_padding">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_compact"
+                android:contentDescription="@string/app_name"
+                app:tint="@color/text_on_primary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/app_name"
+                android:textColor="@color/text_on_primary"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Responsive guideline for landscape - more space for visualization -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.28" />
+
+    <!-- Input Section Card - Optimized for landscape -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/input_section_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/section_gap"
+        app:cardBackgroundColor="@color/scandi_surface"
+        app:cardCornerRadius="@dimen/radius_md"
+        app:cardElevation="@dimen/card_elevation"
+        app:strokeColor="@color/scandi_border"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideline_vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/app_bar_card">
+
+        <FrameLayout
+            android:id="@+id/container_input"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/small_gap" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Visualization Section Card - More space in landscape -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/visualization_section_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/section_gap"
+        app:cardBackgroundColor="@color/scandi_surface"
+        app:cardCornerRadius="@dimen/radius_md"
+        app:cardElevation="@dimen/card_elevation"
+        app:strokeColor="@color/scandi_border"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical"
+        app:layout_constraintTop_toBottomOf="@id/app_bar_card">
+
+        <FrameLayout
+            android:id="@+id/container_visualization"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/small_gap" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

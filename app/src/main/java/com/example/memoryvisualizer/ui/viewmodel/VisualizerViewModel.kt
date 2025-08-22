@@ -21,6 +21,9 @@ class VisualizerViewModel : ViewModel() {
     private val _errors = MutableSharedFlow<String>()
     val errors: SharedFlow<String> = _errors.asSharedFlow()
 
+    private val _loaded = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val loaded: SharedFlow<Unit> = _loaded.asSharedFlow()
+
     private var lastInputBlocks: String = ""
     private var lastInputProcesses: String = ""
 
@@ -31,6 +34,7 @@ class VisualizerViewModel : ViewModel() {
             parseCsv(processesCsv)?.let { p ->
                 val res = sim.load(b, p)
                 _state.value = res
+                _loaded.tryEmit(Unit)
             } ?: emitError("Invalid processes list")
         } ?: emitError("Invalid blocks list")
     }
@@ -50,6 +54,9 @@ class VisualizerViewModel : ViewModel() {
     fun onReset() { update(sim.reset()) }
     fun onUndo() { update(sim.undo()) }
     fun onRedo() { update(sim.redo()) }
+
+    fun canUndo(): Boolean = sim.canUndo()
+    fun canRedo(): Boolean = sim.canRedo()
 
     private fun update(res: SimulatorStub.AllocationResultStub?) { if (res!=null) _state.value = res }
 
