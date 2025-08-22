@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="allocation_algorithms">
+        <item>First Fit</item>
+        <item>Best Fit</item>
+        <item>Worst Fit</item>
+    </string-array>
+</resources>

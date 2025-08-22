@@ -1,6 +1,6 @@
 package com.example.memoryvisualizer.model
+import com.example.memoryvisualizer.model.strategy.AllocationStrategy // Or the correct package
 
-import com.example.memoryvisualizer.model.strategy.AllocationStrategy
 
 /**
  * Handles memory compaction operations to consolidate free space.

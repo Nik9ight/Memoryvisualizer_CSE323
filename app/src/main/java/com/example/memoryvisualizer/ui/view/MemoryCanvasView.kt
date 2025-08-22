@@ -46,8 +46,33 @@ class MemoryCanvasView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (renderBlocks.isEmpty()) return
+        
         val h = height.toFloat()
         val w = width.toFloat()
+        val scale = w / totalSize
+
+        val rect = RectF()
+        for (block in renderBlocks) {
+            val left = block.start * scale
+            val right = (block.start + block.size) * scale
+
+            rect.set(left, 0f, right, h)
+            blockPaint.color = when {
+                block.isProcess -> 0xFF2196F3.toInt() // Blue for processes
+                block.isFree -> 0xFFE0E0E0.toInt() // Light gray for free blocks
+                else -> 0xFFF44336.toInt() // Red for other blocks
+            }
+            canvas.drawRect(rect, blockPaint)
+            canvas.drawRect(rect, borderPaint)
+
+            if (block.processId != null) {
+                val text = block.processId
+                val textWidth = textPaint.measureText(text)
+                val x = left + (right - left - textWidth) / 2
+                val y = h / 2 + textPaint.textSize / 3
+                canvas.drawText(text, x, y, textPaint)
+            }
+        }
         val scale = h / totalSize
         val minLabelPx = 14f * resources.displayMetrics.density
 

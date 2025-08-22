@@ -1,6 +1,5 @@
 package com.example.memoryvisualizer.ui.view
 
-import com.example.memoryvisualizer.stub.SimulatorStub
 import com.example.memoryvisualizer.ui.util.ColorPalette
 
 /** Maps stub blocks to render model used by MemoryCanvasView */
@@ -15,7 +14,7 @@ object RenderBlockMapper {
         val color: Int
     )
 
-    fun map(blocks: List<SimulatorStub.BlockStub>): List<RenderBlock> =
+    fun map(blocks: List<Int>): List<RenderBlock> =
         blocks.map { b ->
             RenderBlock(
                 id = b.id,
