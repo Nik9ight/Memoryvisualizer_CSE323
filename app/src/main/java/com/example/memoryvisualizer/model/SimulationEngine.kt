@@ -13,22 +13,37 @@ internal class SimulationEngine {
     private var nextProcessIdx = 0                       // pointer to next WAITING process
     private var lastAction: String = ""
     private var internalFragTotal = 0                    // tracks internal fragmentation
+    private var currentTime = 0                          // simulation time
+    private val allocationTimes = mutableMapOf<String, Int>() // processId -> allocation time
     
     // Original inputs for reset functionality
     private var originalBlocks = listOf<Int>()
     private var originalProcesses = listOf<Int>()
+    private var originalArrivals: List<Int>? = null
+    private var originalBursts: List<Int>? = null
     
     // History management for undo/redo functionality
     private val snapshots = mutableListOf<AllocationResult>()
     private var cursor = -1                              // points to current snapshot
+    private val timeSnapshots = mutableListOf<Int>()     // parallel time tracking
+    private val allocationTimeSnapshots = mutableListOf<Map<String, Int>>() // parallel allocation time tracking
     
     /**
      * Loads the initial memory configuration and process list.
      */
     fun load(initialBlocks: List<Int>, processes: List<Int>) {
+        load(initialBlocks, processes, null, null)
+    }
+    
+    /**
+     * Loads the initial memory configuration and process list with optional arrival and burst times.
+     */
+    fun load(initialBlocks: List<Int>, processes: List<Int>, arrivals: List<Int>?, bursts: List<Int>?) {
         // Store originals for reset
         originalBlocks = initialBlocks.filter { it > 0 }
         originalProcesses = processes.filter { it > 0 }
+        originalArrivals = arrivals
+        originalBursts = bursts
         
         // Reset state
         blocks.clear()
@@ -36,7 +51,11 @@ internal class SimulationEngine {
         nextProcessIdx = 0
         internalFragTotal = 0
         snapshots.clear()
+        timeSnapshots.clear()
+        allocationTimeSnapshots.clear()
         cursor = -1
+        currentTime = 0
+        allocationTimes.clear()
         
         // Create initial free blocks
         var addr = 0
@@ -47,7 +66,17 @@ internal class SimulationEngine {
         
         // Create initial process definitions
         originalProcesses.forEachIndexed { i, size ->
-            this.processes += ProcessDef(id = "P${i+1}", size = size, status = ProcessStatus.WAITING)
+            val arrival = arrivals?.getOrNull(i) ?: 0
+            val burst = bursts?.getOrNull(i)
+            val burstOrNull = burst?.takeIf { it > 0 } // <=0 treated as null
+            this.processes += ProcessDef(
+                id = "P${i+1}", 
+                size = size, 
+                status = ProcessStatus.WAITING,
+                arrivalTime = arrival.coerceAtLeast(0),
+                burstTime = burstOrNull,
+                remainingBurst = burstOrNull
+            )
         }
         
         lastAction = "LOAD"
@@ -61,10 +90,29 @@ internal class SimulationEngine {
      * Returns a snapshot of the system state after the step.
      */
     fun step(strategy: AllocationStrategy): AllocationResult {
-        // Find next WAITING process
-        val pIdx = findNextWaiting()
-        if (pIdx == -1) return snapshot("NO-OP: ALL DONE")
+        // First, handle burst time completions (auto-free processes)
+        handleBurstCompletions()
+        
+        // Find next available process (considering arrival time)
+        val pIdx = findNextAvailableProcess()
+        if (pIdx == -1) {
+            // No more processes available, advance time if there are future arrivals
+            val nextArrivalTime = findNextArrivalTime()
+            if (nextArrivalTime > currentTime) {
+                currentTime = nextArrivalTime
+                lastAction = "TIME ADVANCE to $currentTime"
+                saveSnapshot()
+                return step(strategy) // Retry allocation at new time
+            }
+            return snapshot("NO-OP: ALL DONE")
+        }
+        
         val p = processes[pIdx]
+        
+        // Advance time to process arrival if needed
+        if (currentTime < p.arrivalTime) {
+            currentTime = p.arrivalTime
+        }
         
         // Choose a block using the allocation strategy (pure)
         val chosen = strategy.chooseBlock(blocks, p.size)
@@ -72,13 +120,18 @@ internal class SimulationEngine {
         return if (chosen == -1) {
             // Mark as FAILED if no suitable block found
             processes[pIdx] = p.copy(status = ProcessStatus.FAILED)
-            lastAction = "FAIL ${p.id} via ${strategy.name}"
+            lastAction = "FAIL ${p.id} via ${strategy.name} at time $currentTime"
             saveSnapshot()
             snapshot(lastAction)
         } else {
             // Split the chosen block and allocate the process
             splitAndAllocate(chosen, pIdx)
-            lastAction = "ALLOCATE ${p.id} via ${strategy.name}"
+            allocationTimes[p.id] = currentTime
+            
+            // Create action message with scheduling info
+            val burstInfo = if (p.burstTime != null) " (burst: ${p.burstTime})" else ""
+            lastAction = "ALLOCATE ${p.id} via ${strategy.name} at time $currentTime$burstInfo"
+            
             // Advance pointer for next call
             nextProcessIdx = pIdx + 1
             saveSnapshot()
@@ -94,11 +147,24 @@ internal class SimulationEngine {
         val results = mutableListOf<AllocationResult>()
         
         while (true) {
-            val pIdx = findNextWaiting()
-            if (pIdx == -1) break // No more waiting processes
+            // Check if there are any processes that can still be processed
+            val hasWaitingProcesses = processes.any { it.status == ProcessStatus.WAITING }
+            val hasAllocatedWithBurstTime = processes.any { 
+                it.status == ProcessStatus.ALLOCATED && it.burstTime != null 
+            }
+            
+            if (!hasWaitingProcesses && !hasAllocatedWithBurstTime) {
+                break // No more processes to handle
+            }
             
             val result = step(strategy)
             results.add(result)
+            
+            // Prevent infinite loops
+            if (results.size > 1000) {
+                lastAction = "SIMULATION TIMEOUT"
+                break
+            }
         }
         
         return results
@@ -144,7 +210,7 @@ internal class SimulationEngine {
      * Resets the simulation to its initial state.
      */
     fun reset(): AllocationResult {
-        load(originalBlocks, originalProcesses)
+        load(originalBlocks, originalProcesses, originalArrivals, originalBursts)
         return current() // load() already saves snapshot, so just return current
     }
     
@@ -152,6 +218,100 @@ internal class SimulationEngine {
      * Returns the current state of the simulation without changes.
      */
     fun current(): AllocationResult = snapshots.getOrElse(cursor) { snapshot("CURRENT") }
+    
+    /**
+     * Handles burst time completions - frees processes that have exceeded their burst time.
+     */
+    private fun handleBurstCompletions() {
+        val processesToFree = mutableListOf<Int>()
+        
+        for (i in processes.indices) {
+            val p = processes[i]
+            if (p.status == ProcessStatus.ALLOCATED) {
+                val allocationTime = allocationTimes[p.id] ?: 0
+                if (p.shouldAutoFree(currentTime, allocationTime)) {
+                    processesToFree.add(i)
+                }
+            }
+        }
+        
+        // Free the processes and their blocks
+        for (processIdx in processesToFree) {
+            val p = processes[processIdx]
+            // Find and free the allocated block
+            val blockIdx = blocks.indexOfFirst { it.id == p.allocatedBlockId }
+            if (blockIdx != -1) {
+                blocks[blockIdx] = blocks[blockIdx].copy(isFree = true)
+                coalesceFree() // Merge adjacent free blocks
+            }
+            // Mark process as completed
+            processes[processIdx] = p.markCompleted()
+            allocationTimes.remove(p.id)
+        }
+    }
+    
+    /**
+     * Finds the next process that has arrived and is waiting.
+     * When multiple processes arrive at the same time, prioritizes the one with the shortest burst time.
+     */
+    private fun findNextAvailableProcess(): Int {
+        // Get all available processes (arrived and waiting)
+        val availableProcesses = processes.indices.filter { i ->
+            val p = processes[i]
+            p.status == ProcessStatus.WAITING && p.hasArrived(currentTime)
+        }
+        
+        if (availableProcesses.isEmpty()) {
+            return -1
+        }
+        
+        // Group processes by arrival time and find the earliest arrival time
+        val processesGroupedByArrival = availableProcesses.groupBy { processes[it].arrivalTime }
+        val earliestArrivalTime = processesGroupedByArrival.keys.minOrNull() ?: return -1
+        
+        // Get processes that arrived at the earliest time
+        val earliestArrivedProcesses = processesGroupedByArrival[earliestArrivalTime] ?: return -1
+        
+        // If only one process arrived at the earliest time, return it
+        if (earliestArrivedProcesses.size == 1) {
+            return earliestArrivedProcesses[0]
+        }
+        
+        // Multiple processes arrived at the same time - apply shortest burst time tie-breaking
+        return earliestArrivedProcesses.minWithOrNull { idx1, idx2 ->
+            val p1 = processes[idx1]
+            val p2 = processes[idx2]
+            
+            // Compare burst times (null burst time is treated as infinity - lowest priority)
+            when {
+                p1.burstTime == null && p2.burstTime == null -> {
+                    // Both have no burst time, use original order (process ID)
+                    idx1.compareTo(idx2)
+                }
+                p1.burstTime == null -> 1  // p1 has no burst time, p2 wins
+                p2.burstTime == null -> -1 // p2 has no burst time, p1 wins
+                else -> {
+                    // Both have burst times, shortest wins
+                    val burstCompare = p1.burstTime.compareTo(p2.burstTime)
+                    if (burstCompare == 0) {
+                        // Same burst time, use original order (process ID)
+                        idx1.compareTo(idx2)
+                    } else {
+                        burstCompare
+                    }
+                }
+            }
+        } ?: -1
+    }
+    
+    /**
+     * Finds the next arrival time in the future.
+     */
+    private fun findNextArrivalTime(): Int {
+        return processes
+            .filter { it.status == ProcessStatus.WAITING && it.arrivalTime > currentTime }
+            .minOfOrNull { it.arrivalTime } ?: Int.MAX_VALUE
+    }
     
     /**
      * Splits a free block and allocates a portion to a process.
@@ -319,10 +479,14 @@ internal class SimulationEngine {
         // Truncate forward history if stepping after undo
         while (snapshots.lastIndex > cursor) {
             snapshots.removeAt(snapshots.lastIndex)
+            timeSnapshots.removeAt(timeSnapshots.lastIndex)
+            allocationTimeSnapshots.removeAt(allocationTimeSnapshots.lastIndex)
         }
         
         val snapshot = snapshot(lastAction)
         snapshots.add(snapshot)
+        timeSnapshots.add(currentTime)
+        allocationTimeSnapshots.add(allocationTimes.toMap())
         cursor = snapshots.lastIndex
     }
     
@@ -339,6 +503,11 @@ internal class SimulationEngine {
         // Restore processes
         processes.clear()
         processes.addAll(currentSnapshot.processes.map { it.copy() })
+        
+        // Restore time state
+        currentTime = timeSnapshots.getOrNull(cursor) ?: 0
+        allocationTimes.clear()
+        allocationTimes.putAll(allocationTimeSnapshots.getOrNull(cursor) ?: emptyMap())
         
         // Restore other state
         lastAction = currentSnapshot.lastAction

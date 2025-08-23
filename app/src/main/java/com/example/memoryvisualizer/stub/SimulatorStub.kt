@@ -44,9 +44,12 @@ class SimulatorStub {
         val id: String,
         val size: Int,
         val status: Status,
-        val allocatedBlockId: String? = null
+        val allocatedBlockId: String? = null,
+        val arrivalTime: Int = 0,
+        val burstTime: Int? = null,
+        val remainingBurst: Int? = null
     ) {
-        enum class Status { ALLOCATED, WAITING, FAILED }
+        enum class Status { ALLOCATED, WAITING, FAILED, COMPLETED }
         
         companion object {
             fun from(processDef: ProcessDef): ProcessStub {
@@ -57,8 +60,12 @@ class SimulatorStub {
                         ProcessStatus.ALLOCATED -> Status.ALLOCATED
                         ProcessStatus.WAITING -> Status.WAITING
                         ProcessStatus.FAILED -> Status.FAILED
+                        ProcessStatus.COMPLETED -> Status.COMPLETED
                     },
-                    allocatedBlockId = processDef.allocatedBlockId
+                    allocatedBlockId = processDef.allocatedBlockId,
+                    arrivalTime = processDef.arrivalTime,
+                    burstTime = processDef.burstTime,
+                    remainingBurst = processDef.remainingBurst
                 )
             }
         }
@@ -115,6 +122,11 @@ class SimulatorStub {
 
     fun load(blocks: List<Int>, processes: List<Int>) : AllocationResultStub {
         realSimulator.load(blocks, processes)
+        return AllocationResultStub.from(realSimulator.current())
+    }
+
+    fun load(blocks: List<Int>, processes: List<Int>, arrivals: List<Int>?, bursts: List<Int>?) : AllocationResultStub {
+        realSimulator.load(blocks, processes, arrivals, bursts)
         return AllocationResultStub.from(realSimulator.current())
     }
 

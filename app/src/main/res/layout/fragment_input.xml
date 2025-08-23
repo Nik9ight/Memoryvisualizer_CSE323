@@ -219,7 +219,136 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Error Message Card: now below Strategy within scroll content -->
+            <!-- Advanced Controls -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_advanced"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/section_spacing"
+                app:cardBackgroundColor="@color/scandi_surface"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="@dimen/card_elevation"
+                app:strokeColor="@color/scandi_border"
+                app:strokeWidth="1dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/card_strategy">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/card_padding">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="@dimen/section_gap">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            style="@style/TextTitleMedium"
+                            android:text="Advanced Options" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Enable"
+                            android:layout_marginEnd="8dp"
+                            style="@style/TextTitleMedium"
+                            android:textColor="@color/scandi_text_high" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_advanced"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/TextCaption"
+                        android:text="Configure arrival and burst times for processes"
+                        android:textColor="@color/scandi_text_muted"
+                        android:layout_marginBottom="@dimen/section_gap" />
+
+                    <!-- Advanced container -->
+                    <LinearLayout
+                        android:id="@+id/advanced_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!-- Arrival Times -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_arrivals"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/spacing_md"
+                            style="@style/ScandiTextInput"
+                            android:hint="Arrival Times (CSV)"
+                            app:helperText="When each process becomes eligible (e.g. 0, 2, 3, 5)"
+                            app:helperTextEnabled="true"
+                            app:boxStrokeColor="@color/scandi_border"
+                            app:hintTextColor="@color/scandi_text_muted"
+                            app:hintEnabled="true"
+                            app:hintAnimationEnabled="true">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_arrivals"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:maxLines="3"
+                                android:paddingHorizontal="@dimen/section_gap"
+                                android:paddingTop="12dp"
+                                android:paddingBottom="12dp"
+                                android:textColor="@color/scandi_text_high"
+                                android:textSize="@dimen/text_size_body" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Burst Times -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/til_bursts"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            style="@style/ScandiTextInput"
+                            android:hint="Burst Times (CSV)"
+                            app:helperText="How long each process holds memory (e.g. 5, 3, , 6) - blank means no auto-free"
+                            app:helperTextEnabled="true"
+                            app:boxStrokeColor="@color/scandi_border"
+                            app:hintTextColor="@color/scandi_text_muted"
+                            app:hintEnabled="true"
+                            app:hintAnimationEnabled="true">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_bursts"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="text"
+                                android:maxLines="3"
+                                android:paddingHorizontal="@dimen/section_gap"
+                                android:paddingTop="12dp"
+                                android:paddingBottom="12dp"
+                                android:textColor="@color/scandi_text_high"
+                                android:textSize="@dimen/text_size_body" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Error Message Card: now below Advanced within scroll content -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_error"
                 android:layout_width="0dp"
@@ -230,7 +359,7 @@
                 app:cardElevation="@dimen/card_elevation_subtle"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/card_strategy">
+                app:layout_constraintTop_toBottomOf="@id/card_advanced">
 
                 <LinearLayout
                     android:layout_width="match_parent"

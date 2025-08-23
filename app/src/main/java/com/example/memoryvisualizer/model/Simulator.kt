@@ -4,6 +4,12 @@ import com.example.memoryvisualizer.model.strategy.AllocationStrategy
 
 interface Simulator {
     fun load(initialBlocks: List<Int>, processes: List<Int>)
+    fun load(
+        initialBlocks: List<Int>,
+        processes: List<Int>,
+        arrivals: List<Int>?,   // null -> default 0s
+        bursts: List<Int>?      // null -> default nulls
+    )
     fun setStrategy(strategy: AllocationStrategy)
     fun step(): AllocationResult              // allocate next waiting process
     fun runAll(): List<AllocationResult>      // simulate to end

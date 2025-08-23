@@ -26,13 +26,44 @@ class VisualizerViewModel : ViewModel() {
 
     private var lastInputBlocks: String = ""
     private var lastInputProcesses: String = ""
+    private var lastInputArrivals: String = ""
+    private var lastInputBursts: String = ""
 
     fun onLoad(blocksCsv: String, processesCsv: String) {
+        onLoad(blocksCsv, processesCsv, null, null)
+    }
+
+    fun onLoad(
+        blocksCsv: String, 
+        processesCsv: String, 
+        arrivalsCsv: String?, 
+        burstsCsv: String?
+    ) {
         lastInputBlocks = blocksCsv
         lastInputProcesses = processesCsv
+        lastInputArrivals = arrivalsCsv ?: ""
+        lastInputBursts = burstsCsv ?: ""
+        
         parseCsv(blocksCsv)?.let { b ->
             parseCsv(processesCsv)?.let { p ->
-                val res = sim.load(b, p)
+                val arrivals = arrivalsCsv?.let { parseCsvAllowEmpty(it) }
+                val bursts = burstsCsv?.let { parseCsvNullable(it) }
+                
+                // Validate lengths if provided
+                if (arrivals != null && arrivals.size != p.size) {
+                    emitError("Arrival list must match the number of processes")
+                    return
+                }
+                if (bursts != null && bursts.size != p.size) {
+                    emitError("Burst list must match the number of processes")
+                    return
+                }
+                
+                val burstsInts: List<Int>? = bursts?.map { it ?: -1 }?.let { list ->
+                    if (list.all { it == -1 }) null else list.map { if (it < 0) 0 else it }
+                }
+                
+                val res = sim.load(b, p, arrivals, burstsInts)
                 _state.value = res
                 _loaded.tryEmit(Unit)
             } ?: emitError("Invalid processes list")
@@ -68,6 +99,28 @@ class VisualizerViewModel : ViewModel() {
             }
             .takeIf { it.isNotEmpty() }
     } catch (e: Exception) { null }
+
+    /** Returns null if the entire field is blank; otherwise a list (default 0 for blank tokens). */
+    private fun parseCsvAllowEmpty(input: String): List<Int>? {
+        val raw = input.trim()
+        if (raw.isEmpty()) return null
+        val tokens = raw.split(',', ';', ' ', '\n', '\t')
+        return tokens.map { t ->
+            val s = t.trim()
+            if (s.isEmpty()) 0 else s.toIntOrNull() ?: 0
+        }
+    }
+
+    /** Returns null if the entire field is blank; otherwise a list where blank tokens => nulls. */
+    private fun parseCsvNullable(input: String): List<Int?>? {
+        val raw = input.trim()
+        if (raw.isEmpty()) return null
+        val tokens = raw.split(',', ';', ' ', '\n', '\t')
+        return tokens.map { t ->
+            val s = t.trim()
+            if (s.isEmpty()) null else s.toIntOrNull()
+        }
+    }
 
     private fun emitError(msg: String) { viewModelScope.launch { _errors.emit(msg) } }
 }

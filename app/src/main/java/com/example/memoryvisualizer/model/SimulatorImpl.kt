@@ -13,6 +13,10 @@ class SimulatorImpl(private var strategy: AllocationStrategy) : Simulator {
         engine.load(initialBlocks, processes)
     }
 
+    override fun load(initialBlocks: List<Int>, processes: List<Int>, arrivals: List<Int>?, bursts: List<Int>?) {
+        engine.load(initialBlocks, processes, arrivals, bursts)
+    }
+
     override fun setStrategy(strategy: AllocationStrategy) {
         this.strategy = strategy
     }

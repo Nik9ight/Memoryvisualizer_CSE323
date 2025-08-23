@@ -21,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.memoryvisualizer.R
 import com.example.memoryvisualizer.ui.viewmodel.VisualizerViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.flow.collectLatest
@@ -44,6 +45,14 @@ class InputFragment : Fragment() {
         val strategyDropdown: MaterialAutoCompleteTextView = view.findViewById(R.id.spinner_strategy)
         val errorCard: View = view.findViewById(R.id.card_error)
         val errorText: TextView = view.findViewById(R.id.text_error)
+        
+        // Advanced controls
+        val switchAdvanced: SwitchMaterial = view.findViewById(R.id.switch_advanced)
+        val advancedContainer: View = view.findViewById(R.id.advanced_container)
+        val tilArrivals: TextInputLayout = view.findViewById(R.id.til_arrivals)
+        val tilBursts: TextInputLayout = view.findViewById(R.id.til_bursts)
+        val arrivalsInput: EditText = view.findViewById(R.id.input_arrivals)
+        val burstsInput: EditText = view.findViewById(R.id.input_bursts)
 
         // Raise Load button above the keyboard (IME) by adjusting its bottom margin dynamically
         val baseBottomMargin = resources.getDimensionPixelSize(R.dimen.section_gap)
@@ -67,13 +76,46 @@ class InputFragment : Fragment() {
             Snackbar.make(view, getString(R.string.fmt_strategy_selected, name), Snackbar.LENGTH_SHORT).show()
         }
 
+        // Advanced toggle functionality
+        switchAdvanced.setOnCheckedChangeListener { _, isChecked ->
+            advancedContainer.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+
         fun validateNow(): Boolean {
             tilBlocks.error = null
             tilProcesses.error = null
+            tilArrivals.error = null
+            tilBursts.error = null
+            
             val bOk = parseCsv(blocksInput.text.toString()) != null
             val pOk = parseCsv(processesInput.text.toString()) != null
+            
             if (!bOk) tilBlocks.error = getString(R.string.error_invalid_blocks)
             if (!pOk) tilProcesses.error = getString(R.string.error_invalid_processes)
+            
+            // Validate advanced inputs if enabled
+            if (switchAdvanced.isChecked) {
+                val processes = parseCsv(processesInput.text.toString())
+                val arrivalsText = arrivalsInput.text.toString().trim()
+                val burstsText = burstsInput.text.toString().trim()
+                
+                if (arrivalsText.isNotEmpty()) {
+                    val arrivals = parseCsvAllowEmpty(arrivalsText)
+                    if (arrivals != null && processes != null && arrivals.size != processes.size) {
+                        tilArrivals.error = "Must match number of processes (${processes.size})"
+                        return false
+                    }
+                }
+                
+                if (burstsText.isNotEmpty()) {
+                    val bursts = parseCsvNullable(burstsText)
+                    if (bursts != null && processes != null && bursts.size != processes.size) {
+                        tilBursts.error = "Must match number of processes (${processes.size})"
+                        return false
+                    }
+                }
+            }
+            
             return bOk && pOk
         }
 
@@ -83,17 +125,33 @@ class InputFragment : Fragment() {
                 loadBtn.isEnabled = blocksInput.text.isNotBlank() && processesInput.text.isNotBlank()
                 tilBlocks.error = null
                 tilProcesses.error = null
+                tilArrivals.error = null
+                tilBursts.error = null
             }
             override fun afterTextChanged(s: Editable?) {}
         }
 
         blocksInput.addTextChangedListener(watcher)
         processesInput.addTextChangedListener(watcher)
+        arrivalsInput.addTextChangedListener(watcher)
+        burstsInput.addTextChangedListener(watcher)
 
         loadBtn.isEnabled = false
         loadBtn.setOnClickListener {
             if (validateNow()) {
-                vm.onLoad(blocksInput.text.toString(), processesInput.text.toString())
+                if (!switchAdvanced.isChecked) {
+                    vm.onLoad(blocksInput.text.toString(), processesInput.text.toString())
+                } else {
+                    val arrivalsText = arrivalsInput.text.toString().trim()
+                    val burstsText = burstsInput.text.toString().trim()
+                    
+                    vm.onLoad(
+                        blocksInput.text.toString(),
+                        processesInput.text.toString(),
+                        arrivalsText.takeIf { it.isNotEmpty() },
+                        burstsText.takeIf { it.isNotEmpty() }
+                    )
+                }
             }
         }
 
@@ -118,4 +176,26 @@ class InputFragment : Fragment() {
             }
             .takeIf { it.isNotEmpty() }
     } catch (_: Exception) { null }
+
+    /** Returns null if the entire field is blank; otherwise a list (default 0 for blank tokens). */
+    private fun parseCsvAllowEmpty(input: String): List<Int>? {
+        val raw = input.trim()
+        if (raw.isEmpty()) return null
+        val tokens = raw.split(',', ';', ' ', '\n', '\t')
+        return tokens.map { t ->
+            val s = t.trim()
+            if (s.isEmpty()) 0 else s.toIntOrNull() ?: 0
+        }
+    }
+
+    /** Returns null if the entire field is blank; otherwise a list where blank tokens => nulls. */
+    private fun parseCsvNullable(input: String): List<Int?>? {
+        val raw = input.trim()
+        if (raw.isEmpty()) return null
+        val tokens = raw.split(',', ';', ' ', '\n', '\t')
+        return tokens.map { t ->
+            val s = t.trim()
+            if (s.isEmpty()) null else s.toIntOrNull()
+        }
+    }
 }
