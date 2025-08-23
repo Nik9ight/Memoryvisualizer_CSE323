@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Canvas and visualization -->
+    <dimen name="canvas_height">480dp</dimen>
+
+    <!-- Scandinavian Minimal — Spacing / Radii / Sizes -->
+    <dimen name="radius_sm">8dp</dimen>
+    <dimen name="radius_md">12dp</dimen>
+    <dimen name="btn_min_height">44dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="section_gap">16dp</dimen>
+    <dimen name="small_gap">8dp</dimen>
+
+    <!-- Button dimensions (aligned to tokens) -->
+    <dimen name="button_height_primary">44dp</dimen>
+    <dimen name="button_height_secondary">44dp</dimen>
+    <dimen name="button_height_compact">44dp</dimen>
+    <dimen name="touch_target_size">48dp</dimen>
+
+    <!-- Spacing and padding (aliases retained for compatibility) -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">12dp</dimen>
+    <dimen name="spacing_lg">16dp</dimen>
+    <dimen name="spacing_xl">16dp</dimen>
+    <dimen name="spacing_xxl">24dp</dimen>
+
+    <!-- Card and layout margins -->
+    <dimen name="card_margin">8dp</dimen>
+    <dimen name="card_margin_vertical">16dp</dimen>
+    <dimen name="content_padding">16dp</dimen>
+    <dimen name="content_padding_large">16dp</dimen>
+    <dimen name="section_spacing">16dp</dimen>
+
+    <!-- Card design -->
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="card_elevation">3dp</dimen>
+    <dimen name="card_elevation_subtle">2dp</dimen>
+
+    <!-- Typography (aligned to tokens) -->
+    <dimen name="text_size_header">18sp</dimen>
+    <dimen name="text_size_subheader">18sp</dimen>
+    <dimen name="text_size_body">14sp</dimen>
+    <dimen name="text_size_caption">12sp</dimen>
+    <dimen name="text_size_small">12sp</dimen>
+
+    <!-- Icon sizes -->
+    <dimen name="icon_size_small">16dp</dimen>
+    <dimen name="icon_size_medium">20dp</dimen>
+    <dimen name="icon_size_large">24dp</dimen>
+    <dimen name="icon_size_status">8dp</dimen>
+</resources>

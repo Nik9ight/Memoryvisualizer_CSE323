@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Memory Visualizer</string>
     <string name="hint_blocks">Blocks CSV (e.g. 100,200,50)</string>
@@ -14,4 +15,24 @@
     <string name="fmt_stats">INT:%1$d EXT:%2$d LARGEST:%3$d HOLES:%4$d SUCCESS:%5$s%%</string>
     <string name="label_last_action">Last Action:</string>
     <string name="label_stats">Stats:</string>
+
+    <!-- New -->
+    <string name="error_invalid_blocks">Enter positive integers separated by commas/spaces</string>
+    <string name="error_invalid_processes">Enter positive integers separated by commas/spaces</string>
+    <string name="fmt_strategy_selected">Strategy: %1$s</string>
+    <string name="fmt_block_info_alloc">Process %1$s • Size %2$d</string>
+    <string name="fmt_block_info_free">Free • Size %1$d</string>
+    <string name="tab_title_setup">Setup</string>
+    <string name="tab_title_visualize">Visualize</string>
+    <string name="subtitle_setup">Configure memory blocks and processes for visualization</string>
+    <string name="title_memory_blocks">Memory Blocks</string>
+    <string name="helper_blocks">e.g. 100, 200, 50</string>
+    <string name="title_process_queue">Process Queue</string>
+    <string name="helper_processes">e.g. 70, 120, 30</string>
+    <string name="title_strategy">Strategy</string>
+    <string name="cd_error_icon">Error icon</string>
+    <string name="label_tablet_mode">Tablet Mode</string>
+    <string name="action_close">Close</string>
+    <string name="label_blocks">Blocks</string>
+    <string name="label_processes">Processes</string>
 </resources>
