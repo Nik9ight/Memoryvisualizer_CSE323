@@ -2,48 +2,25 @@ package com.example.memoryvisualizer.model.strategy
 
 import com.example.memoryvisualizer.model.MemoryBlock
 
-public interface AllocationStrategy {
-    /** Returns index of chosen free block or -1 if none fits */
-    fun chooseBlock(blocks: List<MemoryBlock>, processSize: Int): Int
-    val name: String
-    fun allocate(blocks: List<Int>, processSize: Int): Int
-}
-
- abstract class FirstFitStrategy : AllocationStrategy {
-    override fun allocate(blocks: List<Int>, processSize: Int): Int {
-        return blocks.indexOfFirst { it >= processSize }
-    }
-}
-
-
-abstract class BestFitStrategy : AllocationStrategy {
-    override fun allocate(blocks: List<Int>, processSize: Int): Int {
-        var bestFitIndex = -1
-        var bestFitSize = Int.MAX_VALUE
-
-        blocks.forEachIndexed { index, blockSize ->
-            if (blockSize >= processSize && blockSize < bestFitSize) {
-                bestFitIndex = index
-                bestFitSize = blockSize
+/**
+ * First Fit Strategy: Allocates the process to the first block it encounters
+ * that is large enough to accommodate it.
+ */
+class FirstFitStrategy : AllocationStrategy {
+    
+    override fun chooseBlock(blocks: List<MemoryBlock>, processSize: Int): Int {
+        // First Fit naturally implements the tie-breaking rule (lowest address first)
+        // because blocks are assumed to be sorted by start address
+        // and we iterate through them in order
+        blocks.forEachIndexed { index, block ->
+            // Return the index of first free block that can fit the process
+            if (block.isFree && block.size >= processSize) {
+                return index
             }
         }
-
-        return bestFitIndex
+        
+        return -1  // No suitable block found
     }
-}
-
-abstract class WorstFitStrategy : AllocationStrategy {
-    override fun allocate(blocks: List<Int>, processSize: Int): Int {
-        var worstFitIndex = -1
-        var worstFitSize = -1
-
-        blocks.forEachIndexed { index, blockSize ->
-            if (blockSize >= processSize && blockSize > worstFitSize) {
-                worstFitIndex = index
-                worstFitSize = blockSize
-            }
-        }
-
-        return worstFitIndex
-    }
+    
+    override val name: String = "First Fit"
 }
