@@ -1,0 +1,334 @@
+@startuml Memory Visualizer - High Level Architecture
+
+!theme plain
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam stereotypeCBackgroundColor lightgray
+
+package "Model Layer" {
+    interface Simulator {
+        +load(blocks: List<Int>, processes: List<Int>)
+        +load(blocks: List<Int>, processes: List<Int>, arrivals: List<Int>?, bursts: List<Int>?)
+        +setStrategy(strategy: AllocationStrategy)
+        +step(): AllocationResult
+        +runAll(): List<AllocationResult>
+        +compact(): AllocationResult
+        +reset(): AllocationResult
+        +current(): AllocationResult
+        +undo(): AllocationResult?
+        +redo(): AllocationResult?
+        +canUndo(): Boolean
+        +canRedo(): Boolean
+    }
+
+    class SimulatorImpl {
+        -engine: SimulationEngine
+        -strategy: AllocationStrategy
+        +load()
+        +setStrategy()
+        +step()
+        +runAll()
+        +compact()
+        +reset()
+        +current()
+        +undo()
+        +redo()
+    }
+
+    class SimulationEngine {
+        -blocks: MutableList<MemoryBlock>
+        -processes: MutableList<ProcessDef>
+        -currentTime: Int
+        -snapshots: List<AllocationResult>
+        -cursor: Int
+        +load()
+        +step()
+        +runAll()
+        +compact()
+        +reset()
+        +current()
+        +undo()
+        +redo()
+        -splitAndAllocate()
+        -coalesceFree()
+        -handleBurstCompletions()
+    }
+
+    class MemoryBlock {
+        +id: String
+        +start: Int
+        +size: Int
+        +isFree: Boolean
+        +end: Int
+        +getProcessId(): String?
+        +isAdjacentTo(): Boolean
+        +canFit(): Boolean
+        +withFreeStatus(): MemoryBlock
+    }
+
+    class ProcessDef {
+        +id: String
+        +size: Int
+        +status: ProcessStatus
+        +arrivalTime: Int
+        +burstTime: Int?
+        +remainingBurst: Int?
+        +allocatedBlockId: String?
+        +isAllocated: Boolean
+        +isWaiting: Boolean
+        +hasFailed: Boolean
+        +isCompleted: Boolean
+        +hasArrived(): Boolean
+        +shouldAutoFree(): Boolean
+        +withStatus(): ProcessDef
+        +allocatedTo(): ProcessDef
+        +markCompleted(): ProcessDef
+    }
+
+    enum ProcessStatus {
+        ALLOCATED
+        WAITING
+        FAILED
+        COMPLETED
+    }
+
+    class AllocationResult {
+        +freeBlocks: List<MemoryBlock>
+        +allocatedBlocks: List<MemoryBlock>
+        +waitingProcesses: List<ProcessDef>
+        +allocatedProcesses: List<ProcessDef>
+        +fragmentationStats: FragmentationStats
+        +successPercentage: Double
+        +memoryUtilization: Double
+    }
+
+    class FragmentationStats {
+        +internalTotal: Int
+        +externalTotal: Int
+        +largestFree: Int
+        +holeCount: Int
+        +calculateSuccessPercentage(): Double
+        +getMemoryUtilization(): Double
+    }
+
+    class CompactionManager {
+        +compact(): List<MemoryBlock>
+        +compactWithValidation(): List<MemoryBlock>
+        +isAlreadyCompacted(): Boolean
+        +calculateFragmentation(): FragmentationStats
+    }
+}
+
+package "Strategy Pattern" {
+    interface AllocationStrategy {
+        +chooseBlock(blocks: List<MemoryBlock>, processSize: Int): Int
+        +name: String
+    }
+
+    class FirstFitStrategy {
+        +chooseBlock(): Int
+        +name: String
+    }
+
+    class BestFitStrategy {
+        +chooseBlock(): Int
+        +name: String
+    }
+
+    class WorstFitStrategy {
+        +chooseBlock(): Int
+        +name: String
+    }
+}
+
+package "Adapter Layer" {
+    class SimulatorStub {
+        -realSimulator: SimulatorImpl
+        +load()
+        +setStrategy()
+        +step()
+        +runAll()
+        +compact()
+        +reset()
+        +current()
+        +undo()
+        +redo()
+        +canUndo()
+        +canRedo()
+    }
+
+    class BlockStub {
+        +id: String
+        +start: Int
+        +size: Int
+        +isFree: Boolean
+        +processId: String?
+        +internalFrag: Int
+    }
+
+    class ProcessStub {
+        +id: String
+        +size: Int
+        +status: Status
+        +allocatedBlockId: String?
+        +arrivalTime: Int
+        +burstTime: Int?
+        +remainingBurst: Int?
+    }
+
+    class AllocationResultStub {
+        +freeBlocks: List<BlockStub>
+        +allocatedBlocks: List<BlockStub>
+        +waitingProcesses: List<ProcessStub>
+        +allocatedProcesses: List<ProcessStub>
+        +stats: StatsStub
+    }
+
+    class StatsStub {
+        +internalFrag: Int
+        +externalFrag: Int
+        +successPercentage: Double
+        +memoryUtilization: Double
+    }
+
+    enum Strategy {
+        FIRST
+        BEST
+        WORST
+    }
+}
+
+package "UI Layer" {
+    class MainActivity {
+        -binding: ActivityMainBinding
+        -pagerAdapter: MainPagerAdapter
+        +onCreate()
+        +setupViewPager()
+    }
+
+    class MainPagerAdapter {
+        +createFragment(): Fragment
+        +getItemCount(): Int
+        +getPageTitle(): CharSequence
+    }
+
+    class InputFragment {
+        -viewModel: VisualizerViewModel
+        +onCreateView(): View
+        +onViewCreated()
+        -validateNow()
+        -parseCsv()
+        -setupAdvancedMode()
+    }
+
+    class VisualizationFragment {
+        -viewModel: VisualizerViewModel
+        -memoryCanvas: MemoryCanvasView
+        +onCreateView(): View
+        +onViewCreated()
+        -setupControlButtons()
+        -observeState()
+        -showBlockInfo()
+    }
+
+    class VisualizerViewModel {
+        -sim: SimulatorStub
+        -_state: MutableStateFlow<AllocationResultStub?>
+        -_errors: MutableSharedFlow<String>
+        -_loaded: MutableSharedFlow<Unit>
+        +state: StateFlow<AllocationResultStub?>
+        +errors: SharedFlow<String>
+        +loaded: SharedFlow<Unit>
+        +onLoad()
+        +onStrategySelected()
+        +onStep()
+        +onRun()
+        +onCompact()
+        +onReset()
+        +onUndo()
+        +onRedo()
+        +canUndo()
+        +canRedo()
+    }
+
+    class MemoryCanvasView {
+        -renderBlocks: List<RenderBlock>
+        -totalSize: Int
+        -blockPaint: Paint
+        -textPaint: Paint
+        -onBlockClick: ((String) -> Unit)?
+        -onBlockLongPress: ((String) -> Unit)?
+        +setData()
+        +onDraw()
+        +onTouchEvent()
+        -findBlockAt()
+    }
+
+    class RenderBlockMapper {
+        +map(): List<RenderBlock>
+    }
+
+    class RenderBlock {
+        +id: String
+        +start: Int
+        +size: Int
+        +isFree: Boolean
+        +processId: String?
+        +internalFrag: Int
+        +color: Int
+    }
+
+    class ColorPalette {
+        +colorForProcess(): Int
+    }
+}
+
+' Relationships - Model Layer
+Simulator <|.. SimulatorImpl
+SimulatorImpl *-- SimulationEngine
+SimulationEngine o-- MemoryBlock
+SimulationEngine o-- ProcessDef
+SimulationEngine o-- AllocationResult
+SimulationEngine --> CompactionManager
+AllocationResult o-- FragmentationStats
+AllocationResult o-- MemoryBlock
+AllocationResult o-- ProcessDef
+ProcessDef --> ProcessStatus
+SimulatorImpl --> AllocationStrategy
+
+' Relationships - Strategy Pattern
+AllocationStrategy <|.. FirstFitStrategy
+AllocationStrategy <|.. BestFitStrategy
+AllocationStrategy <|.. WorstFitStrategy
+
+' Relationships - Adapter Layer
+SimulatorStub --> SimulatorImpl
+SimulatorStub ..> Strategy
+SimulatorStub ..> BlockStub
+SimulatorStub ..> ProcessStub
+SimulatorStub ..> AllocationResultStub
+AllocationResultStub o-- StatsStub
+AllocationResultStub o-- BlockStub
+AllocationResultStub o-- ProcessStub
+
+' Relationships - UI Layer
+MainActivity --> MainPagerAdapter
+MainPagerAdapter ..> InputFragment
+MainPagerAdapter ..> VisualizationFragment
+InputFragment --> VisualizerViewModel
+VisualizationFragment --> VisualizerViewModel
+VisualizationFragment --> MemoryCanvasView
+VisualizerViewModel --> SimulatorStub
+MemoryCanvasView --> RenderBlockMapper
+RenderBlockMapper ..> RenderBlock
+MemoryCanvasView --> ColorPalette
+
+' Cross-layer relationships
+BlockStub ..> MemoryBlock : adapts
+ProcessStub ..> ProcessDef : adapts
+AllocationResultStub ..> AllocationResult : adapts
+StatsStub ..> FragmentationStats : adapts
+RenderBlockMapper --> BlockStub
+
+@enduml
