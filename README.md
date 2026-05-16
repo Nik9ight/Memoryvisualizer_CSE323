@@ -2,7 +2,7 @@
 
 A sophisticated Android application for visualizing and simulating memory allocation algorithms with time-based scheduling support.
 
-## 🎯 Features
+##  Features
 
 ### Core Memory Allocation
 - **Multiple Allocation Strategies**: First Fit, Best Fit, Worst Fit
@@ -22,11 +22,11 @@ A sophisticated Android application for visualizing and simulating memory alloca
 - **Advanced Input Options**: Toggle between simple and advanced configurations
 - **Real-time Statistics**: Fragmentation metrics and success rates
 
-## 📱 Screenshots
+##  Screenshots
 
 *[Add screenshots here showing the app in action]*
 
-## 🏗️ Architecture
+##  Architecture
 
 ### Model-View-ViewModel (MVVM)
 ```
@@ -53,7 +53,7 @@ A sophisticated Android application for visualizing and simulating memory alloca
 - Backward compatibility
 - Clean API boundaries
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Android Studio Arctic Fox or later
@@ -84,7 +84,7 @@ git clone https://github.com/Nik9ight/Memoryvisualizer_CSE323.git
 3. Add burst times: `3, 5, 2, 4`
 4. Run time-based simulation
 
-## 📚 Memory Allocation Algorithms
+##  Memory Allocation Algorithms
 
 ### First Fit
 - Allocates to the first block that can accommodate the process
@@ -101,7 +101,7 @@ git clone https://github.com/Nik9ight/Memoryvisualizer_CSE323.git
 - Leaves larger remaining blocks
 - Can reduce external fragmentation
 
-## 🕒 Time-Based Features
+##  Time-Based Features
 
 ### Arrival Times
 - Processes become eligible for allocation at specific times
@@ -119,14 +119,14 @@ When multiple processes arrive simultaneously:
 2. **Priority 2**: Original process order
 3. **Special case**: Processes with burst time over those without
 
-## 🧮 Fragmentation Metrics
+##  Fragmentation Metrics
 
 - **Internal Fragmentation**: Wasted space within allocated blocks
 - **External Fragmentation**: Free space between allocated blocks
 - **Success Percentage**: Successfully allocated processes
 - **Memory Utilization**: Percentage of total memory in use
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 app/src/main/java/com/example/memoryvisualizer/
@@ -161,7 +161,7 @@ app/src/main/java/com/example/memoryvisualizer/
     └── drawable/                 # Icons and graphics
 ```
 
-## 🔧 Technical Details
+##  Technical Details
 
 ### Memory Block Management
 ```kotlin
@@ -189,7 +189,7 @@ data class ProcessDef(
 - **Event Scheduling**: Handles arrivals and completions
 - **State Management**: Undo/redo with time state preservation
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```bash
@@ -207,7 +207,7 @@ data class ProcessDef(
 3. **Edge Cases**: Empty inputs, large processes, zero burst times
 4. **UI Interactions**: Toggle advanced mode, undo/redo operations
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -221,27 +221,27 @@ data class ProcessDef(
 - Update documentation for API changes
 - Use meaningful commit messages
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Authors
+##  Authors
 
 - **Nik9ight** - *Initial work* - [GitHub](https://github.com/Nik9ight)
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Computer Science Education community
 - Operating Systems textbook examples
 - Material Design 3 guidelines
 - Android Architecture Components
 
-## 🐛 Known Issues
+##  Known Issues
 
 - Large datasets (>1000 processes) may cause UI lag
 - Very small burst times (1-2 units) might not be visually distinct
 
-## 🗺️ Roadmap
+##  Roadmap
 
 - [ ] Export simulation results to CSV
 - [ ] Additional allocation strategies (Next Fit, Buddy System)
@@ -250,7 +250,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] 3D memory visualization
 - [ ] Performance benchmarking tools
 
-## 📞 Support
+##  Support
 
 For support, create an issue on GitHub.
 
